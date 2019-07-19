@@ -1,3 +1,5 @@
 /target
 **/*.rs.bk
 vendor/
+cmd/serverless/functions/*_amd64
+.envrc

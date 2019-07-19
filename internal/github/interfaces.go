@@ -1,6 +1,5 @@
 package github
 
-
 import "net/http"
 
 // HTTPClient a service that can do http calls

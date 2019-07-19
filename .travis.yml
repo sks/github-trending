@@ -1,0 +1,14 @@
+sudo: required
+
+language: go
+
+go:
+  - master
+
+script: make
+
+deploy:
+  - provider: script
+    script: make deploy
+    on:
+      branch: master

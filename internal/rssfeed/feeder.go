@@ -30,23 +30,42 @@ func NewFeeder(ghClient GithubClient) *Feeder {
 
 // Serve serve the http request
 func (f *Feeder) Serve(w http.ResponseWriter, r *http.Request) {
-	repos, err := f.ghClient.GetTrendingRepos(github.ProjectFilter{})
+	fe, err := f.CreateFeeds(r.URL.String())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	feed.Items, err = f.createFeeds(repos.Items)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-	feed.Created = time.Now()
-	feed.Link = &feeds.Link{Href: r.URL.String()}
 	err = feed.WriteRss(w)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	fe.WriteRss(w)
+}
+
+// CreateRSSFeeds creates an RSS FEED
+func (f *Feeder) CreateRSSFeeds(link string) (string, error) {
+	fe, err := f.CreateFeeds(link)
+	if err != nil {
+		return ``, err
+	}
+	return fe.ToRss()
+}
+
+// CreateFeeds create using the gh client
+func (f *Feeder) CreateFeeds(link string) (*feeds.Feed, error) {
+	repos, err := f.ghClient.GetTrendingRepos(github.ProjectFilter{})
+	if err != nil {
+		return nil, err
+	}
+
+	feed.Items, err = f.createFeeds(repos.Items)
+	if err != nil {
+		return nil, err
+	}
+	feed.Link = &feeds.Link{Href: link}
+	feed.Created = time.Now()
+	return feed, nil
 }
 
 func (f *Feeder) createFeeds(repos []github.Repo) (items []*feeds.Item, err error) {
