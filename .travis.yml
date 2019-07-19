@@ -8,7 +8,8 @@ go:
 script: make
 
 deploy:
-  - provider: script
-    script: make deploy
-    on:
-      branch: master
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file_glob: true
+  file: "build/*"
+  skip_cleanup: true
