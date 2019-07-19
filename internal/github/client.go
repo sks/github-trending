@@ -30,7 +30,8 @@ func NewClient(httpClient HTTPClient) Client {
 
 // GetTrendingRepos get the trending repos
 func (c Client) GetTrendingRepos(p ProjectFilter) (*TrendingReposResponse, error) {
-	req, err := http.NewRequest("GET", fmt.Sprintf("%s/search/repositories?%s", c.githubAPIURL, p.GetParams().Encode()), nil)
+	fmt.Println(`p.GetParams().Encode()`, p.GetParams())
+	req, err := http.NewRequest("GET", fmt.Sprintf("%s/search/repositories?%s", c.githubAPIURL, p.GetParams()), nil)
 	if err != nil {
 		return nil, err
 	}

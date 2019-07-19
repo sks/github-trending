@@ -15,7 +15,7 @@ type Feeder struct {
 
 var feed = &feeds.Feed{
 	Title:       "Github Trending repos",
-	Description: "discussion about tech, footie, photos",
+	Description: "Feed that lists of github trending repos",
 	Author:      &feeds.Author{Name: "github-trending", Email: "noreply@gmail.com"},
 	Created:     time.Now(),
 	Copyright:   "See https://github.com/sks/github-trending",
@@ -30,7 +30,13 @@ func NewFeeder(ghClient GithubClient) *Feeder {
 
 // Serve serve the http request
 func (f *Feeder) Serve(w http.ResponseWriter, r *http.Request) {
-	fe, err := f.CreateFeeds(r.URL.String())
+	projectFilter, err := github.NewProjectFilter(r.URL.Query())
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(err.Error()))
+		return
+	}
+	fe, err := f.CreateFeeds(projectFilter, r.URL.String())
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -44,8 +50,8 @@ func (f *Feeder) Serve(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateRSSFeeds creates an RSS FEED
-func (f *Feeder) CreateRSSFeeds(link string) (string, error) {
-	fe, err := f.CreateFeeds(link)
+func (f *Feeder) CreateRSSFeeds(projectFilter github.ProjectFilter, link string) (string, error) {
+	fe, err := f.CreateFeeds(projectFilter, link)
 	if err != nil {
 		return ``, err
 	}
@@ -53,8 +59,8 @@ func (f *Feeder) CreateRSSFeeds(link string) (string, error) {
 }
 
 // CreateFeeds create using the gh client
-func (f *Feeder) CreateFeeds(link string) (*feeds.Feed, error) {
-	repos, err := f.ghClient.GetTrendingRepos(github.ProjectFilter{})
+func (f *Feeder) CreateFeeds(projectFilter github.ProjectFilter, link string) (*feeds.Feed, error) {
+	repos, err := f.ghClient.GetTrendingRepos(projectFilter)
 	if err != nil {
 		return nil, err
 	}

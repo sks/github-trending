@@ -2,8 +2,10 @@ package github
 
 import (
 	"fmt"
-	"net/url"
+	"strings"
 	"time"
+
+	"github.com/gorilla/schema"
 )
 
 // ProjectFilter denotes the filter criterias used for filetring the repos
@@ -12,17 +14,26 @@ type ProjectFilter struct {
 	Since    int    `json:"since"`
 }
 
-// GetParams create parameters out the project filter
-func (p ProjectFilter) GetParams() url.Values {
-	params := url.Values{}
-	params.Add("sort", "stars")
-	params.Add("order", "desc")
-	if p.Language != "" {
-		params.Add("q", fmt.Sprintf("language:%s", p.Language))
-	}
-	params.Add("q", fmt.Sprintf("created:>%s", p.sinceDate().Format("2006-01-02")))
+var decoder = schema.NewDecoder()
 
-	return params
+// NewProjectFilter create new project filter from url params
+func NewProjectFilter(urlParams map[string][]string) (ProjectFilter, error) {
+	p := ProjectFilter{}
+	err := decoder.Decode(&p, urlParams)
+	return p, err
+}
+
+// GetParams create parameters out the project filter
+func (p ProjectFilter) GetParams() string {
+	params := "?order=desc&s=stars"
+	queries := []string{
+		fmt.Sprintf("created:>%s", p.sinceDate().Format("2006-01-02")),
+		fmt.Sprintf("stars:>0"),
+	}
+	if p.Language != "" {
+		queries = append(queries, fmt.Sprintf("language:%s", p.Language))
+	}
+	return params + "&q=" + strings.Join(queries, "+")
 }
 
 func (p ProjectFilter) sinceDate() time.Time {
